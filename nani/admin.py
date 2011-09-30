@@ -622,10 +622,11 @@ class TranslatableInlineModelAdmin(InlineModelAdmin, TranslatableModelAdminMixin
     def queryset(self, request):
         language = self._language(request)
         languages = [language,]
-        for lang in FALLBACK_LANGUAGES:
-            if not lang in languages:
-                languages.append(lang)
-        qs = self.model._default_manager.untranslated().use_fallbacks()
+        if not request.GET.get(self.query_language_key, None):
+            for lang in FALLBACK_LANGUAGES:
+                if not lang in languages:
+                    languages.append(lang)
+        qs = self.model._default_manager.untranslated().use_fallbacks(*languages)
         # TODO: this should be handled by some parameter to the ChangeList.
         ordering = self.ordering or () # otherwise we might try to *None, which is bad ;)
         if ordering:
