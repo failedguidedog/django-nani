@@ -22,6 +22,7 @@ from django.utils.translation import ugettext_lazy as _, get_language
 from functools import update_wrapper
 from nani.forms import TranslatableModelForm
 from nani.utils import get_cached_translation, get_translation
+from nani.manager import FALLBACK_LANGUAGES
 import django
 import urllib
 
@@ -620,7 +621,11 @@ class TranslatableInlineModelAdmin(InlineModelAdmin, TranslatableModelAdminMixin
 
     def queryset(self, request):
         language = self._language(request)
-        qs = self.model._default_manager.language(language)
+        languages = [language,]
+        for lang in FALLBACK_LANGUAGES:
+            if not lang in languages:
+                languages.append(lang)
+        qs = self.model._default_manager.untranslated().use_fallbacks()
         # TODO: this should be handled by some parameter to the ChangeList.
         ordering = self.ordering or () # otherwise we might try to *None, which is bad ;)
         if ordering:
